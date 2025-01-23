@@ -9,7 +9,7 @@ const Signup = () => {
     username: "",
     email: "",
     password: "",
-    role: "", // Default role is 'user'
+    role: "user", // Default role is 'user'
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -32,10 +32,8 @@ const Signup = () => {
       });
 
       if (response.status === 201) {
-        // Check for successful creation (HTTP 201 Created)
-        toast.success("Signup successful! Please login.");
+        toast.success("Signup successful! Redirecting to home...");
         setTimeout(() => navigate("/home"), 3000);
-        // Redirect to login page (or handle further flow)
       } else {
         toast.error("Signup failed. Please try again.");
       }

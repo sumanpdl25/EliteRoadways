@@ -28,25 +28,24 @@ export const loginhandeler = async (req, res) => {
 };
 export const signuphandeler = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
     // Check if the email already exists
-    const match = await User.findOne({ email });
-    if (match) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email already exists" });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "Email already exists" });
     }
 
     // Hash the password
-    const salt = 10
-    const hashedPassword = await bcryptjs.hash(password,  salt);
+    const saltRounds = 10;
+    const hashedPassword = await bcryptjs.hash(password, saltRounds);
 
     // Create the user
     const newUser = await User.create({
       username,
       email,
       password: hashedPassword,
+      role, // Role is explicitly passed from the form
     });
 
     // Create a JWT token
@@ -54,14 +53,14 @@ export const signuphandeler = async (req, res) => {
       userID: newUser._id,
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1h", // Adjust expiration as needed
+      expiresIn: "1h",
     });
 
     // Set the cookie and respond
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Use HTTPS in production
+        secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 60 * 60 * 1000, // 1 hour
       })
