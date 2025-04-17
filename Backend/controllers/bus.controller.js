@@ -6,12 +6,14 @@ export const addBusHandler = async (req, res) => {
     // Extract bus data from the request body
     const {
       busnum,
-      noOfSeats,
       date,
       origin,
       destination,
+      fare,
       departuretime,
       driver,
+      driverContact,
+      seats,
     } = req.body;
 
     // Extract the userID from the JWT token (which should be in req.user if the middleware is set)
@@ -20,12 +22,14 @@ export const addBusHandler = async (req, res) => {
     // Create the new bus entry
     const newBus = await Bus.create({
       busnum,
-      noOfSeats,
       date,
       origin,
       destination,
+      fare,
       departuretime,
       driver,
+      driverContact,
+      seats,
       createdBy, // The createdBy is now set to the user's ObjectId
     });
 
@@ -43,6 +47,7 @@ export const addBusHandler = async (req, res) => {
     });
   }
 };
+
 export const getBusHandler = async (req, res) => {
   try {
     const buses = await Bus.find();
@@ -52,6 +57,44 @@ export const getBusHandler = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to get buses" });
   }
 };
+
+export const getBusByIdHandler = async (req, res) => {
+  try {
+    const { busId } = req.params;
+    
+    if (!busId) {
+      return res.status(400).json({
+        success: false,
+        message: "Bus ID is required",
+      });
+    }
+    
+    const bus = await Bus.findById(busId).populate({
+      path: 'bookedBy.$*.userId',
+      select: 'username',
+      model: 'User'
+    });
+    
+    if (!bus) {
+      return res.status(404).json({
+        success: false,
+        message: "Bus not found",
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      bus,
+    });
+  } catch (error) {
+    console.error("Error getting bus by ID:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get bus details",
+    });
+  }
+};
+
 export const searchBusHandler = async (req, res) => {
   try {
     // Capture the 'destination' query parameter from the request
@@ -88,8 +131,9 @@ export const searchBusHandler = async (req, res) => {
     });
   }
 };
- export const bookSeatHandler = async (req, res) => {
-  const { busId, seatNumber, userId, pickupLocation } = req.body;
+
+export const bookSeatHandler = async (req, res) => {
+  const { busId, seatNumber, userId, pickupLocation, contactNumber } = req.body;
 
   try {
     // Find the bus by ID
@@ -99,7 +143,7 @@ export const searchBusHandler = async (req, res) => {
     }
 
     // Validate the seat number
-    if (seatNumber <= 0 || seatNumber > bus.noOfSeats) {
+    if (seatNumber <= 0 || seatNumber > bus.seats) {
       return res.status(400).json({ success: false, message: "Invalid seat number" });
     }
 
@@ -108,8 +152,20 @@ export const searchBusHandler = async (req, res) => {
       return res.status(400).json({ success: false, message: "Seat already booked" });
     }
 
+    // Validate required fields
+    if (!pickupLocation || !contactNumber) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Pickup location and contact number are required" 
+      });
+    }
+
     // Store the booking details
-    bus.bookedBy.set(seatNumber.toString(), { userId, pickupLocation });
+    bus.bookedBy.set(seatNumber.toString(), { 
+      userId, 
+      pickupLocation,
+      contactNumber
+    });
 
     // Update the bookedSeats array
     bus.bookedSeats.push(seatNumber);

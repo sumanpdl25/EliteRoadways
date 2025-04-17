@@ -1,18 +1,22 @@
-import  { useState, useEffect } from "react";
-import PropTypes from "prop-types"; // Import PropTypes
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
-// SeatingChart Component to Display All Seats Dynamically
-function SeatingChart({ totalRows, totalColumns, selectedSeat, onSelectSeat }) {
+// BookSeat Component to Display Bus Layout with 40 Seats (10 rows x 4 columns)
+function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
+  // Create 40 seats in a realistic bus layout (10 rows x 4 columns)
   const createSeats = () => {
     const seats = [];
-    for (let row = 1; row <= totalRows; row++) {
-      for (let col = 1; col <= totalColumns; col++) {
+    // Rows 1-10 with 4 seats each
+    for (let row = 1; row <= 10; row++) {
+      for (let col = 1; col <= 4; col++) {
         const seatNumber = `${row}${String.fromCharCode(64 + col)}`; // e.g., "1A", "1B", etc.
         seats.push({
+          id: seatNumber,
           number: seatNumber,
-          available: true, // Here you can add a condition to check availability
+          available: !bookedSeats.includes(seatNumber), // Check if seat is booked
           selected: seatNumber === selectedSeat,
         });
       }
@@ -20,195 +24,171 @@ function SeatingChart({ totalRows, totalColumns, selectedSeat, onSelectSeat }) {
     return seats;
   };
 
-  const seats = createSeats(); // Generate seats based on rows and columns
-
-  return (
-    <div className="grid grid-cols-6 gap-2 mb-4">
-      {seats.map((seat, index) => (
-        <button
-          key={index}
-          onClick={() => onSelectSeat(seat)}
-          className={`px-4 py-2 rounded-md border w-full ${
-            seat.selected
-              ? "bg-blue-600 text-white"
-              : seat.available
-              ? "bg-green-400 text-white"
-              : "bg-gray-300 text-gray-600"
-          }`}
-          disabled={!seat.available}
-        >
-          {seat.number}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// PropTypes for SeatingChart to validate props
-SeatingChart.propTypes = {
-  totalRows: PropTypes.number.isRequired,
-  totalColumns: PropTypes.number.isRequired,
-  selectedSeat: PropTypes.string.isRequired,
-  onSelectSeat: PropTypes.func.isRequired,
-};
-
-function BookSeat() {
-  const { state } = useLocation(); // Get data passed from the previous page
+  const seats = createSeats();
   const navigate = useNavigate();
 
-  // Validate `state` to ensure necessary data exists
-  const busId = state?.busId || null;
-  const initialSeatNumber = state?.seatNumber || "";
-  const initialPickupLocation = state?.pickupLocation || "";
-
-  // State hooks
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null); // For storing user data
-  const [userLoading, setUserLoading] = useState(true); // To track loading state of user data
-  const [seatNumber, setSeatNumber] = useState(initialSeatNumber); // For storing seat number input
-  const [pickupLocation, setPickupLocation] = useState(initialPickupLocation); // For storing pickup location input
-
-  // Fetch user profile data
-  const fetchUserProfile = async () => {
-    try {
-      const response = await axios.get("/api/v1/users/profile", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (response.data.success) {
-        setUser(response.data.user);
-      } else {
-        alert("Failed to fetch user data.");
-      }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      alert("Error fetching user profile.");
-    } finally {
-      setUserLoading(false); // Set loading to false after API call
-    }
-  };
-
-  // Book the seat
-  const bookSeat = async () => {
-    if (!user) {
-      alert("User data is missing.");
+  const handleSeatClick = (seat) => {
+    if (!seat.available && !isAdmin) {
+      toast.error("This seat is already booked");
       return;
     }
-
-    if (!seatNumber || !pickupLocation) {
-      alert("Please select a seat and provide a pickup location.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await axios.post("/api/v1/bus/bookseat", {
-        busId,
-        seatNumber: seatNumber.toString(), // Ensure seatNumber is a string
-        userId: user._id,
-        pickupLocation,
-      });
-      console.log(response.data);
-
-      if (response.data.success) {
-        alert(response.data.message || "Seat booked successfully!");
-        navigate("/"); // Navigate after booking
-      } else {
-        alert("Failed to book seat.");
-      }
-    } catch (error) {
-      console.error("Error booking seat:", error);
-      alert("Error booking seat.");
-    } finally {
-      setLoading(false);
-    }
+    onSelectSeat(seat);
+    // Store the bus ID in localStorage for the SeatDetails page
+    localStorage.setItem("selectedBusId", busId);
+    // Navigate to SeatDetails with the seat ID as a parameter
+    navigate(`/seat-details/${seat.id}`);
   };
-
-  // Validate state and fetch user profile
-  useEffect(() => {
-    if (!busId || !initialSeatNumber || !initialPickupLocation) {
-      alert("Invalid data. Please try again.");
-      navigate("/"); // Navigate to a safe place if data is invalid
-    } else {
-      fetchUserProfile();
-    }
-  }, [busId, initialSeatNumber, initialPickupLocation, navigate]);
-
-  // Handle seat selection
-  const handleSelectSeat = (seat) => {
-    if (seat.available) {
-      setSeatNumber(seat.number); // Set selected seat number
-    }
-  };
-
-  // If the user data is still loading, show a loading message
-  if (userLoading) {
-    return <div>Loading user data...</div>;
-  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 to-purple-500 px-4">
-      <h2 className="text-3xl font-bold text-white mb-6">Book Your Seat</h2>
-
-      <div className="bg-white p-6 rounded-lg shadow-lg space-y-4 w-full max-w-md">
-        <h3 className="text-2xl font-semibold text-gray-800">Bus Information</h3>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Bus ID: {busId}</label>
-
-          {/* Display seat selection grid */}
-          <label className="block text-gray-700 mt-2">Choose a Seat:</label>
-          <SeatingChart
-            totalRows={10} // Number of rows in the bus
-            totalColumns={6} // Number of seats per row (A, B, C, D, E, F)
-            selectedSeat={seatNumber} // Highlight the selected seat
-            onSelectSeat={handleSelectSeat} // Handle seat selection
-          />
-
-          {/* Pickup Location */}
-          <label className="block text-gray-700 mt-2">Pickup Location:</label>
-          <input
-            type="text"
-            value={pickupLocation}
-            onChange={(e) => setPickupLocation(e.target.value)}
-            className="px-4 py-3 rounded-md border border-gray-300 w-full"
-            placeholder="Enter pickup location"
-          />
+    <div className="bus-layout relative w-full max-w-4xl mx-auto p-4 bg-gray-100 rounded-lg">
+      {/* Bus front */}
+      <div className="bus-front h-16 bg-blue-600 rounded-t-lg flex items-center justify-center">
+        <div className="w-24 h-8 bg-yellow-400 rounded-full"></div>
+        <div className="w-24 h-8 bg-yellow-400 rounded-full ml-4"></div>
+      </div>
+      
+      {/* Driver's area */}
+      <div className="driver-area h-20 bg-gray-300 flex items-center justify-center">
+        <div className="w-16 h-16 bg-gray-400 rounded-full flex items-center justify-center">
+          <span className="text-gray-600 font-bold">D</span>
         </div>
-
-        {/* User Information */}
-        {user && (
-          <div className="mb-4">
-            <label className="block text-gray-700">User ID: {user._id}</label>
-            <label className="block text-gray-700">Email: {user.email}</label>
+      </div>
+      
+      {/* Main seating area */}
+      <div className="seating-area p-4">
+        {/* All rows (1-10) */}
+        <div className="all-rows grid grid-cols-9 gap-2">
+          {/* Left side seats (2 seats) */}
+          <div className="col-span-4 grid grid-cols-2 gap-4">
+            {seats.filter((_, index) => index % 4 < 2).map((seat, index) => (
+              <button
+                key={`left-${index}`}
+                onClick={() => handleSeatClick(seat)}
+                className={`sofa-seat h-20 rounded-lg border-2 flex items-center justify-center relative overflow-hidden shadow-md ${
+                  seat.selected
+                    ? "border-blue-800"
+                    : seat.available
+                    ? "border-green-600 hover:shadow-lg"
+                    : "border-red-600"
+                }`}
+                disabled={!seat.available && !isAdmin}
+              >
+                {/* Sofa back */}
+                <div className="absolute top-0 left-0 right-0 h-6 rounded-t-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#1e40af' : seat.available ? '#34d399' : '#ef4444',
+                       boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.1)'
+                     }}></div>
+                
+                {/* Sofa seat cushion */}
+                <div className="absolute bottom-0 left-0 right-0 h-10 rounded-b-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#2563eb' : seat.available ? '#4ade80' : '#dc2626',
+                       boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                     }}></div>
+                
+                {/* Sofa armrests */}
+                <div className="absolute left-0 top-0 bottom-0 w-2 rounded-l-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#1e3a8a' : seat.available ? '#059669' : '#b91c1c',
+                       boxShadow: 'inset 0 0 4px rgba(0,0,0,0.2)'
+                     }}></div>
+                <div className="absolute right-0 top-0 bottom-0 w-2 rounded-r-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#1e3a8a' : seat.available ? '#059669' : '#b91c1c',
+                       boxShadow: 'inset 0 0 4px rgba(0,0,0,0.2)'
+                     }}></div>
+                
+                {/* Seat number */}
+                <span className="font-bold z-10 text-lg">{seat.number}</span>
+              </button>
+            ))}
           </div>
-        )}
-
-        {/* Booking Confirmation */}
-        <div className="mb-4">
-          <button
-            onClick={bookSeat}
-            className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-lg hover:bg-blue-700 transition duration-300 ease-in-out"
-            disabled={loading}
-          >
-            {loading ? "Booking..." : "Confirm Booking"}
-          </button>
+          
+          {/* Center aisle */}
+          <div className="col-span-1 flex items-center justify-center">
+            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+              <div className="w-1/2 h-1 bg-gray-400 rounded-full"></div>
+            </div>
+          </div>
+          
+          {/* Right side seats (2 seats) */}
+          <div className="col-span-4 grid grid-cols-2 gap-4">
+            {seats.filter((_, index) => index % 4 >= 2).map((seat, index) => (
+              <button
+                key={`right-${index}`}
+                onClick={() => handleSeatClick(seat)}
+                className={`sofa-seat h-20 rounded-lg border-2 flex items-center justify-center relative overflow-hidden shadow-md ${
+                  seat.selected
+                    ? "border-blue-800"
+                    : seat.available
+                    ? "border-green-600 hover:shadow-lg"
+                    : "border-red-600"
+                }`}
+                disabled={!seat.available && !isAdmin}
+              >
+                {/* Sofa back */}
+                <div className="absolute top-0 left-0 right-0 h-6 rounded-t-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#1e40af' : seat.available ? '#34d399' : '#ef4444',
+                       boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.1)'
+                     }}></div>
+                
+                {/* Sofa seat cushion */}
+                <div className="absolute bottom-0 left-0 right-0 h-10 rounded-b-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#2563eb' : seat.available ? '#4ade80' : '#dc2626',
+                       boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                     }}></div>
+                
+                {/* Sofa armrests */}
+                <div className="absolute left-0 top-0 bottom-0 w-2 rounded-l-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#1e3a8a' : seat.available ? '#059669' : '#b91c1c',
+                       boxShadow: 'inset 0 0 4px rgba(0,0,0,0.2)'
+                     }}></div>
+                <div className="absolute right-0 top-0 bottom-0 w-2 rounded-r-lg" 
+                     style={{ 
+                       backgroundColor: seat.selected ? '#1e3a8a' : seat.available ? '#059669' : '#b91c1c',
+                       boxShadow: 'inset 0 0 4px rgba(0,0,0,0.2)'
+                     }}></div>
+                
+                {/* Seat number */}
+                <span className="font-bold z-10 text-lg">{seat.number}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Bus back */}
+      <div className="bus-back h-8 bg-blue-600 rounded-b-lg"></div>
+      
+      {/* Legend */}
+      <div className="legend mt-4 flex justify-center space-x-4">
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-green-400 rounded mr-1"></div>
+          <span className="text-sm">Available</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-blue-600 rounded mr-1"></div>
+          <span className="text-sm">Selected</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-red-500 rounded mr-1"></div>
+          <span className="text-sm">Booked</span>
         </div>
       </div>
     </div>
   );
 }
 
-// PropTypes for BookSeat to validate props
 BookSeat.propTypes = {
-  state: PropTypes.shape({
-    busId: PropTypes.string.isRequired,
-    seatNumber: PropTypes.string,
-    pickupLocation: PropTypes.string,
-  }),
+  selectedSeat: PropTypes.string,
+  onSelectSeat: PropTypes.func.isRequired,
+  busId: PropTypes.string.isRequired,
+  bookedSeats: PropTypes.array.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
 };
 
 export default BookSeat;

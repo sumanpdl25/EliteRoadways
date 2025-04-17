@@ -4,9 +4,7 @@ import { userRouter } from "./Routes/user.routes.js";
 import { busRouter } from "./Routes/bus.routes.js";
 import cookieParser from "cookie-parser";
 
-config({
-  path: "./config.env",
-});
+
 
 export const app = express();
 app.use(express.json());

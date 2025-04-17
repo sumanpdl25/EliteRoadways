@@ -9,12 +9,6 @@ const BusSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    noOfSeats: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 100,
-    },
     date: {
       type: Date,
       required: true,
@@ -28,9 +22,18 @@ const BusSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    fare: {
+      type: Number,
+      required: true,
+    },
     departuretime: {
       type: Date,
       required: true,
+    },
+    seats: {
+      type: Number,
+      default: 40,
+      immutable: true, // This ensures the value cannot be changed after creation
     },
     boardingPoint: {
       type: String, // Optional: You can store default boarding point if you want
@@ -46,16 +49,20 @@ const BusSchema = new mongoose.Schema(
       default: [],
     },
     bookedBy: {
-      type: Map, // Map to associate seat numbers with objects containing userId and pickup location
+      type: Map, // Map to associate seat numbers with objects containing userId, pickup location, and contact number
       of: {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         pickupLocation: { type: String },
+        contactNumber: { type: String },
       },
-
       default: {},
     },
-    driver:{
-      type:String ,
+    driver: {
+      type: String,
+      required: true,
+    },
+    driverContact: {
+      type: String,
       required: true,
     },
   },
