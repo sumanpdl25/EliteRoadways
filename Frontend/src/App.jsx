@@ -7,6 +7,7 @@ import Login from './Pages/Login';
 import Signup from './Pages/Signup';
 import BookSeat from './Pages/BookSeat';
 import SeatDetails from './Pages/SeatDetails';
+import AddBus from './Pages/Addbus';
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -35,6 +36,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="book-seat" element={<BookSeat />} />
           <Route path="seat-details/:seatId" element={<SeatDetails />} />
+          <Route path="addbus" element={<AddBus />} />
         </Route>
       </Routes>
     </Router>

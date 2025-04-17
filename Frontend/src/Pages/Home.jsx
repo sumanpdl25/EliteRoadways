@@ -1,55 +1,87 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+
+// Set default axios configuration
+axios.defaults.withCredentials = true;
 
 function Home() {
   const [destination, setDestination] = useState("");
   const [buses, setBuses] = useState([]);
   const [allBuses, setAllBuses] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Show toast if redirected from add bus
+  useEffect(() => {
+    if (location.state?.toast) {
+      const { type, message } = location.state.toast;
+      if (type === "success") {
+        toast.success(message, {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+        });
+      }
+      // Clear the state to prevent showing the toast again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  // Fetch user data and buses
+  const fetchData = useCallback(async () => {
+    try {
+      // Fetch user profile
+      const profileResponse = await axios.get("/api/v1/users/profile");
+      
+      if (!profileResponse.data?.user) {
+        toast.error("Please login to access this page");
+        navigate("/login");
+        return;
+      }
+
+      const user = profileResponse.data.user;
+      setUserProfile(user);
+      setIsAdmin(user.role?.toLowerCase() === "admin");
+
+      // Fetch buses
+      const busesResponse = await axios.get("/api/v1/bus/getbus");
+
+      if (busesResponse.data.success) {
+        setAllBuses(busesResponse.data.buses);
+        setBuses(busesResponse.data.buses);
+      } else {
+        toast.error("Failed to fetch buses");
+      }
+    } catch (error) {
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        toast.error("Access denied. Please login with valid credentials.");
+        navigate("/login");
+      } else {
+        toast.error("Error loading data. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
 
   useEffect(() => {
-    const fetchBuses = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Please login to view buses");
-          navigate("/login");
-          return;
-        }
-
-        const { data } = await axios.get("api/v1/bus/getbus", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (data.success) {
-          setAllBuses(data.buses);
-          setBuses(data.buses);
-        } else {
-          toast.error("Failed to fetch buses.");
-        }
-      } catch (error) {
-        console.error("Error fetching buses:", error);
-        if (error.response?.status === 401) {
-          toast.error("Session expired. Please login again.");
-          navigate("/login");
-        } else {
-          toast.error("Failed to fetch buses.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBuses();
-  }, [navigate]);
+    fetchData();
+  }, [fetchData]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -69,54 +101,61 @@ function Home() {
   };
 
   const handleAddBus = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please login to add buses");
-      navigate("/login");
+    if (!isAdmin) {
+      toast.error("Access denied. Admin only.");
       return;
     }
-    navigate("/addbus");
+
+    navigate("/addbus", {
+      state: {
+        user: userProfile
+      },
+      replace: true
+    });
   };
 
   const handleBusClick = (bus) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!userProfile) {
       toast.error("Please login to book seats");
       navigate("/login");
       return;
     }
 
     const totalSeats = 40;
-    const availableSeat =
-      totalSeats - (bus.bookedSeats ? bus.bookedSeats.length : 0);
+    const availableSeats = totalSeats - (bus.bookedSeats?.length || 0);
 
-    if (availableSeat <= 0) {
+    if (availableSeats <= 0) {
       toast.error("No seats available for this bus.");
       return;
     }
 
-    const userId = "someUserId";
-    const pickupLocation = "somePickupLocation";
-
     navigate("/bookseat", {
       state: {
         busId: bus._id,
-        seatNumber: availableSeat,
-        userId,
-        pickupLocation,
+        seatNumber: availableSeats,
+        userId: userProfile._id,
+        pickupLocation: userProfile.address || "",
       },
+      replace: true
     });
   };
 
   const handleProfileClick = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!userProfile) {
       toast.error("Please login to view profile");
       navigate("/login");
       return;
     }
-    navigate("/profile");
+    navigate("/profile", { replace: true });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center dark:bg-gray-800 relative overflow-hidden">
@@ -167,6 +206,27 @@ function Home() {
         </motion.div>
 
         <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.8 }}
+          className="flex justify-center mb-8"
+        >
+          {isAdmin && (
+            <motion.button
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.5)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAddBus}
+              className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg text-white font-medium transition duration-300 shadow-lg text-lg tracking-wide"
+            >
+              Add Bus
+            </motion.button>
+          )}
+        </motion.div>
+
+        <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
@@ -203,25 +263,6 @@ function Home() {
           </form>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.8 }}
-          className="flex justify-center mb-8"
-        >
-          <motion.button
-            whileHover={{
-              scale: 1.05,
-              boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.5)",
-            }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleAddBus}
-            className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg text-white font-medium transition duration-300 shadow-lg text-lg tracking-wide"
-          >
-            Add Bus
-          </motion.button>
-        </motion.div>
-
         {buses.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -251,7 +292,7 @@ function Home() {
                     <p className="flex items-center">
                       <span className="w-24 font-medium">Seats Available:</span>
                       <span className="ml-2">
-                        {40 - (bus.bookedSeats ? bus.bookedSeats.length : 0)}
+                        {40 - (bus.bookedSeats?.length || 0)}
                       </span>
                     </p>
                     <p className="flex items-center">
@@ -287,7 +328,27 @@ function Home() {
         </p>
       </motion.div>
 
-      <ToastContainer />
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={true}
+        pauseOnHover={true}
+        theme="dark"
+        toastStyle={{
+          background: "#1f2937",
+          color: "#fff",
+          fontSize: "16px",
+          padding: "16px",
+          borderRadius: "8px",
+          marginTop: "1rem",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        }}
+      />
     </div>
   );
 }

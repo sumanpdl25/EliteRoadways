@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const UserProfile = () => {
-  const [userProfile, setUserProfile] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -24,7 +25,7 @@ const UserProfile = () => {
           },
         });
 
-        setUserProfile(response.data.user);
+        setUser(response.data.user);
       } catch (error) {
         console.error('Error fetching user profile:', error);
         toast.error('Failed to fetch user profile');
@@ -36,69 +37,99 @@ const UserProfile = () => {
     fetchUserProfile();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    toast.success('Logged out successfully');
-    navigate('/login');
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">User Profile</h2>
-            <div className="flex gap-4">
-              <button
-                onClick={() => navigate('/')}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-300"
-              >
-                Logout
-              </button>
+    <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+      {/* Background Image */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+        className="fixed top-0 left-0 w-screen h-screen z-0"
+      >
+        <img 
+          src="/profile.png" 
+          alt="Profile" 
+          className="w-full h-full object-cover opacity-40"
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
+        />
+      </motion.div>
+
+      {/* Overlay gradient */}
+      <div className="fixed inset-0 bg-gradient-to-b from-gray-900/70 via-gray-900/50 to-gray-900/80 z-0"></div>
+
+      <div className="relative z-10 max-w-6xl mx-auto p-6 min-h-screen">
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-5xl font-extrabold text-white drop-shadow-lg tracking-tight">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-green-400">
+              User Profile
+            </span>
+          </h1>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="bg-white/5 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/10"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-white/90">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
+                  Personal Information
+                </span>
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <span className="text-white/70 w-32">Username:</span>
+                  <span className="text-white/90">{user?.username}</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="text-white/70 w-32">Email:</span>
+                  <span className="text-white/90">{user?.email}</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="text-white/70 w-32">Role:</span>
+                  <span className="text-white/90 capitalize">{user?.role}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-white/90">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
+                  Account Actions
+                </span>
+              </h2>
+              <div className="space-y-4">
+                <motion.button
+                  whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)" }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    navigate("/login");
+                  }}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  Logout
+                </motion.button>
+              </div>
             </div>
           </div>
-
-          <div className="space-y-6">
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
-                {userProfile?.username?.charAt(0).toUpperCase()}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Username</label>
-                <p className="text-lg font-semibold text-gray-900">{userProfile?.username}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">Email</label>
-                <p className="text-lg font-semibold text-gray-900">{userProfile?.email}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">Role</label>
-                <p className="text-lg font-semibold text-gray-900 capitalize">{userProfile?.role}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

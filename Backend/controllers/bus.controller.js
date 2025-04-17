@@ -142,11 +142,6 @@ export const bookSeatHandler = async (req, res) => {
       return res.status(404).json({ success: false, message: "Bus not found" });
     }
 
-    // Validate the seat number
-    if (seatNumber <= 0 || seatNumber > bus.seats) {
-      return res.status(400).json({ success: false, message: "Invalid seat number" });
-    }
-
     // Check if the seat is already booked
     if (bus.bookedSeats.includes(seatNumber)) {
       return res.status(400).json({ success: false, message: "Seat already booked" });
@@ -161,7 +156,7 @@ export const bookSeatHandler = async (req, res) => {
     }
 
     // Store the booking details
-    bus.bookedBy.set(seatNumber.toString(), { 
+    bus.bookedBy.set(seatNumber, { 
       userId, 
       pickupLocation,
       contactNumber
@@ -173,9 +168,8 @@ export const bookSeatHandler = async (req, res) => {
     // Save the updated bus information
     await bus.save();
 
-    return res.status(200).json({ success : true, message: "Seat booked successfully" });
+    return res.status(200).json({ success: true, message: "Seat booked successfully" });
     
-
   } catch (error) {
     console.error("Error booking seat:", error);
     return res.status(500).json({ success: false, message: "Error booking seat", error: error.message });

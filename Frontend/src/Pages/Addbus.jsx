@@ -1,25 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { motion } from "framer-motion";
 
-const AddBus = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+function Addbus() {
+  const [loading, setLoading] = useState(true);
+  const [busData, setBusData] = useState({
     busnum: "",
-    date: "",
+    date: new Date().toISOString().split('T')[0],
     origin: "",
     destination: "",
     fare: "",
     departuretime: "",
     driver: "",
     driverContact: "",
-    seats: 40, // Fixed value for seats
+    seats: 40,
   });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await axios.get("/api/v1/users/profile", {
+          withCredentials: true
+        });
+        setLoading(false);
+      } catch (error) {
+        if (error.response?.status === 401) {
+          toast.error("Please login to access this page");
+          navigate("/login");
+        } else {
+          toast.error("Error accessing page");
+          navigate("/");
+        }
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setBusData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -28,167 +52,249 @@ const AddBus = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Create a copy of formData to modify
-      const submissionData = { ...formData };
-      
-      // Convert fare to a number
-      submissionData.fare = Number(submissionData.fare);
-      
-      // Combine date and time for departuretime
-      if (submissionData.date && submissionData.departuretime) {
-        const [hours, minutes] = submissionData.departuretime.split(':');
-        const departureDate = new Date(submissionData.date);
-        departureDate.setHours(parseInt(hours, 10));
-        departureDate.setMinutes(parseInt(minutes, 10));
-        submissionData.departuretime = departureDate.toISOString();
-      }
-      
-      // Ensure all required fields are present
-      if (!submissionData.driverContact) {
-        toast.error("Driver contact number is required");
-        return;
-      }
-      
-      if (!submissionData.fare || isNaN(submissionData.fare)) {
-        toast.error("Valid fare amount is required");
-        return;
-      }
-      
-      const response = await axios.post("/api/v1/bus/addbus", submissionData);
+      // Format the date and time properly
+      const formattedData = {
+        ...busData,
+        departuretime: new Date(busData.departuretime).toISOString(),
+        fare: parseFloat(busData.fare),
+        seats: parseInt(busData.seats, 10)
+      };
+
+      const response = await axios.post("/api/v1/bus/addbus", formattedData, {
+        withCredentials: true
+      });
+
       if (response.data.success) {
         toast.success("Bus added successfully!");
-        navigate("/home");
+        navigate("/", {
+          state: {
+            toast: {
+              type: "success",
+              message: "Bus added successfully!",
+            },
+          },
+        });
+      } else {
+        toast.error(response.data.message || "Failed to add bus");
       }
     } catch (error) {
+      console.error("Error adding bus:", error);
       toast.error(error.response?.data?.message || "Error adding bus");
+      navigate("/");
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Add New Bus</h2>
-      <form onSubmit={handleSubmit} className="max-w-md">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Bus Number
-          </label>
-          <input
-            type="text"
-            name="busnum"
-            value={formData.busnum}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Date
-          </label>
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Origin
-          </label>
-          <input
-            type="text"
-            name="origin"
-            value={formData.origin}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Destination
-          </label>
-          <input
-            type="text"
-            name="destination"
-            value={formData.destination}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Fare
-          </label>
-          <input
-            type="number"
-            name="fare"
-            value={formData.fare}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-            min="0"
-            step="0.01"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Departure Time
-          </label>
-          <input
-            type="time"
-            name="departuretime"
-            value={formData.departuretime}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Driver
-          </label>
-          <input
-            type="text"
-            name="driver"
-            value={formData.driver}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Driver Contact Number
-          </label>
-          <input
-            type="tel"
-            name="driverContact"
-            value={formData.driverContact}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-            pattern="[0-9]{10}"
-            title="Please enter a valid 10-digit phone number"
-          />
-        </div>
-        {/* Hidden input for fixed seats */}
-        <input type="hidden" name="seats" value={formData.seats} />
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          >
-            Add Bus
-          </button>
-        </div>
-      </form>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center dark:bg-gray-800 relative overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.5 }}
+        className="absolute top-0 left-0 w-full h-full z-0"
+      >
+        <img
+          src="/bus1.jpg"
+          alt="Bus"
+          className="w-full h-full object-cover opacity-60"
+        />
+      </motion.div>
+
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-gray-900/80 z-0"></div>
+
+      <div className="w-full max-w-6xl p-6 z-10 relative">
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 10,
+            duration: 1,
+          }}
+          className="flex justify-between items-center mb-8 gap-x-4"
+        >
+          <h1 className="text-4xl font-extrabold text-white drop-shadow-lg tracking-tight">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
+              Add New Bus
+            </span>
+          </h1>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-xl border border-white/20"
+        >
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Bus Number</label>
+                <input
+                  type="text"
+                  name="busnum"
+                  value={busData.busnum}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter bus number"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Driver Name</label>
+                <input
+                  type="text"
+                  name="driver"
+                  value={busData.driver}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter driver name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Driver Contact</label>
+                <input
+                  type="text"
+                  name="driverContact"
+                  value={busData.driverContact}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter driver contact"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Origin</label>
+                <input
+                  type="text"
+                  name="origin"
+                  value={busData.origin}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter origin"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Destination</label>
+                <input
+                  type="text"
+                  name="destination"
+                  value={busData.destination}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter destination"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Departure Time</label>
+                <input
+                  type="datetime-local"
+                  name="departuretime"
+                  value={busData.departuretime}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Fare</label>
+                <input
+                  type="number"
+                  name="fare"
+                  value={busData.fare}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter fare"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Number of Seats</label>
+                <input
+                  type="number"
+                  name="seats"
+                  value={busData.seats}
+                  onChange={handleChange}
+                  required
+                  min="1"
+                  max="100"
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter number of seats"
+                />
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{
+                scale: 1.03,
+                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.5)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              className="col-span-2 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg text-white font-medium transition duration-300 shadow-lg text-lg tracking-wide"
+            >
+              Add Bus
+            </motion.button>
+          </form>
+        </motion.div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-6 text-center z-10"
+      >
+        <p className="text-sm text-white/70 font-light tracking-wide">
+          © 1914 Chill. All Rights Reserved.
+        </p>
+      </motion.div>
+
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={true}
+        pauseOnHover={true}
+        theme="dark"
+        toastStyle={{
+          background: "#1f2937",
+          color: "#fff",
+          fontSize: "16px",
+          padding: "16px",
+          borderRadius: "8px",
+          marginTop: "1rem",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        }}
+      />
     </div>
   );
-};
+}
 
-export default AddBus;
+export default Addbus;
