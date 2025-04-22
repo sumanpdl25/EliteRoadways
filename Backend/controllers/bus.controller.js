@@ -51,7 +51,28 @@ export const addBusHandler = async (req, res) => {
 export const getBusHandler = async (req, res) => {
   try {
     const buses = await Bus.find();
-    res.status(200).json({ success: true, buses });
+    
+    // Convert bookedBy Map to array for each bus
+    const formattedBuses = buses.map(bus => {
+      const busObj = bus.toObject();
+      
+      // Convert bookedBy Map to array of entries
+      if (bus.bookedBy && bus.bookedBy instanceof Map) {
+        busObj.bookedBy = Array.from(bus.bookedBy.entries()).map(([seat, booking]) => ({
+          seat,
+          userId: booking.userId ? booking.userId.toString() : null,
+          pickupLocation: booking.pickupLocation,
+          contactNumber: booking.contactNumber
+        }));
+      } else {
+        busObj.bookedBy = [];
+      }
+      
+      return busObj;
+    });
+
+    console.log('Formatted buses:', formattedBuses);
+    res.status(200).json({ success: true, buses: formattedBuses });
   } catch (error) {
     console.error("Error getting buses:", error);
     res.status(500).json({ success: false, message: "Failed to get buses" });

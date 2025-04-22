@@ -7,8 +7,15 @@ import cors from "cors";
 
 export const app = express();
 
+// CORS configuration
+app.use(cors({
+  origin: 'http://localhost:5173', // Your frontend URL
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
@@ -17,5 +24,5 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/bus', busRouter);
 
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  res.send("Server is running on port 4000");
 });

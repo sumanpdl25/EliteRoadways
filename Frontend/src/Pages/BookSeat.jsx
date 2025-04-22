@@ -4,9 +4,116 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // BookSeat Component to Display Bus Layout with 40 Seats (10 rows x 4 columns)
 function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
+  const [loading, setLoading] = useState(true);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [busDetails, setBusDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
+  const [totalFare, setTotalFare] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { busId, userId, pickupLocation } = location.state;
+        
+        // Fetch bus details
+        const busResponse = await axios.get(`/api/v1/bus/getbus/${busId}`);
+        if (!busResponse.data.success) {
+          throw new Error("Failed to fetch bus details");
+        }
+        setBusDetails(busResponse.data.bus);
+
+        // Fetch user details
+        const userResponse = await axios.get("/api/v1/users/profile");
+        if (!userResponse.data?.user) {
+          throw new Error("Failed to fetch user details");
+        }
+        setUserDetails(userResponse.data.user);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Error loading booking page");
+        navigate("/");
+      }
+    };
+
+    fetchData();
+  }, [location.state, navigate]);
+
+  const handleSeatClick = (seat) => {
+    if (!seat.available && !isAdmin) {
+      toast.error("This seat is already booked");
+      return;
+    }
+    
+    // Call the onSelectSeat callback with the seat object
+    onSelectSeat(seat);
+    
+    // Store both the bus ID and selected seat in localStorage
+    localStorage.setItem("selectedBusId", busId);
+    localStorage.setItem("selectedSeat", seat.id);
+    
+    // Navigate to SeatDetails with the seat ID as a parameter
+    navigate(`/seat-details/${seat.id}`);
+  };
+
+  useEffect(() => {
+    if (busDetails?.fare) {
+      setTotalFare(selectedSeats.length * busDetails.fare);
+    }
+  }, [selectedSeats, busDetails]);
+
+  const handleBooking = async () => {
+    if (selectedSeats.length === 0) {
+      toast.error("Please select at least one seat");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "/api/v1/bus/bookseat",
+        {
+          busId: busDetails._id,
+          seats: selectedSeats,
+          pickupLocation: location.state.pickupLocation,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        toast.success("Seats booked successfully!");
+        navigate("/", {
+          state: {
+            toast: {
+              type: "success",
+              message: "Seats booked successfully!",
+            },
+          },
+        });
+      } else {
+        toast.error(response.data.message || "Failed to book seats");
+      }
+    } catch (error) {
+      console.error("Error booking seats:", error);
+      toast.error(error.response?.data?.message || "Error booking seats");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   // Create 40 seats in a realistic bus layout (10 rows x 4 columns)
   const createSeats = () => {
     const seats = [];
@@ -26,24 +133,6 @@ function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
   };
 
   const seats = createSeats();
-  const navigate = useNavigate();
-
-  const handleSeatClick = (seat) => {
-    if (!seat.available && !isAdmin) {
-      toast.error("This seat is already booked");
-      return;
-    }
-    
-    // Call the onSelectSeat callback with the seat object
-    onSelectSeat(seat);
-    
-    // Store both the bus ID and selected seat in localStorage
-    localStorage.setItem("selectedBusId", busId);
-    localStorage.setItem("selectedSeat", seat.id);
-    
-    // Navigate to SeatDetails with the seat ID as a parameter
-    navigate(`/seat-details/${seat.id}`);
-  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
@@ -226,6 +315,39 @@ function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
           </motion.div>
         </motion.div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-6 text-center z-10"
+      >
+        <p className="text-sm text-white/70 font-light tracking-wide">
+          © 1914 Chill. All Rights Reserved.
+        </p>
+      </motion.div>
+
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={true}
+        pauseOnHover={true}
+        theme="dark"
+        toastStyle={{
+          background: "#1f2937",
+          color: "#fff",
+          fontSize: "16px",
+          padding: "16px",
+          borderRadius: "8px",
+          marginTop: "1rem",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        }}
+      />
     </div>
   );
 }

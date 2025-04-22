@@ -8,6 +8,8 @@ import Signup from './Pages/Signup';
 import BookSeat from './Pages/BookSeat';
 import SeatDetails from './Pages/SeatDetails';
 import AddBus from './Pages/Addbus';
+import BookSeatWrapper from './Pages/BookSeatWrapper';
+import Userdetails from './Pages/Userdetails';
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -34,9 +36,10 @@ function App() {
           }
         >
           <Route index element={<Home />} />
-          <Route path="book-seat" element={<BookSeat />} />
+          <Route path="book-seat" element={<BookSeatWrapper />} />
           <Route path="seat-details/:seatId" element={<SeatDetails />} />
           <Route path="addbus" element={<AddBus />} />
+          <Route path="userdetails" element={<Userdetails />} />
         </Route>
       </Routes>
     </Router>
