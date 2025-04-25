@@ -10,4 +10,4 @@ import mongoose from "mongoose";
     }
 };
 
- // Call the async function to initiate the connection
+ 

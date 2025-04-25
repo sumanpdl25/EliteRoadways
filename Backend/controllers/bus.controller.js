@@ -1,9 +1,9 @@
-import Bus from "../models/bus.model.js"; // Import Bus model
-import jwt from "jsonwebtoken"; // For decoding the JWT
+import Bus from "../models/bus.model.js"; 
+import jwt from "jsonwebtoken"
 
 export const addBusHandler = async (req, res) => {
   try {
-    // Extract bus data from the request body
+
     const {
       busnum,
       date,
@@ -16,10 +16,9 @@ export const addBusHandler = async (req, res) => {
       seats,
     } = req.body;
 
-    // Extract the userID from the JWT token (which should be in req.user if the middleware is set)
-    const createdBy = req.user._id; // Assuming your authentication middleware sets `req.user`
+  
+    const createdBy = req.user._id; 
 
-    // Create the new bus entry
     const newBus = await Bus.create({
       busnum,
       date,
@@ -30,10 +29,9 @@ export const addBusHandler = async (req, res) => {
       driver,
       driverContact,
       seats,
-      createdBy, // The createdBy is now set to the user's ObjectId
+      createdBy, 
     });
 
-    // Respond with the created bus data
     res.status(201).json({
       success: true,
       message: "Bus added successfully",
@@ -52,11 +50,9 @@ export const getBusHandler = async (req, res) => {
   try {
     const buses = await Bus.find();
     
-    // Convert bookedBy Map to array for each bus
     const formattedBuses = buses.map(bus => {
       const busObj = bus.toObject();
-      
-      // Convert bookedBy Map to array of entries
+    
       if (bus.bookedBy && bus.bookedBy instanceof Map) {
         busObj.bookedBy = Array.from(bus.bookedBy.entries()).map(([seat, booking]) => ({
           seat,
@@ -118,7 +114,7 @@ export const getBusByIdHandler = async (req, res) => {
 
 export const searchBusHandler = async (req, res) => {
   try {
-    // Capture the 'destination' query parameter from the request
+    
     const { destination } = req.query;
 
     if (!destination) {
@@ -128,10 +124,10 @@ export const searchBusHandler = async (req, res) => {
       });
     }
 
-    // Query the Bus collection to find buses with the matching destination
+
     const buses = await Bus.find({ destination: new RegExp(destination, "i") });
 
-    // If no buses are found, return a message
+  
     if (buses.length === 0) {
       return res.status(404).json({
         success: false,
@@ -139,7 +135,7 @@ export const searchBusHandler = async (req, res) => {
       });
     }
 
-    // If buses are found, return the results
+
     res.status(200).json({
       success: true,
       buses: buses,
@@ -176,17 +172,17 @@ export const bookSeatHandler = async (req, res) => {
       });
     }
 
-    // Store the booking details
+    
     bus.bookedBy.set(seatNumber, { 
       userId, 
       pickupLocation,
       contactNumber
     });
 
-    // Update the bookedSeats array
+    
     bus.bookedSeats.push(seatNumber);
 
-    // Save the updated bus information
+  
     await bus.save();
 
     return res.status(200).json({ success: true, message: "Seat booked successfully" });

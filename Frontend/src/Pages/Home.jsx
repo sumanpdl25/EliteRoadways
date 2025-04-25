@@ -188,7 +188,7 @@ function Home() {
         >
           <h1 className="text-4xl font-extrabold text-white drop-shadow-lg tracking-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
-              Chill BUSES
+              Elite Roadways
             </span>
           </h1>
 
@@ -336,10 +336,10 @@ function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-6 text-center z-10"
+        className="absolute bottom-6 text-center z-10 w-full"
       >
         <p className="text-sm text-white/70 font-light tracking-wide">
-          © 1914 Chill. All Rights Reserved.
+          © 2024 Elite Roadways. All Rights Reserved.
         </p>
       </motion.div>
 

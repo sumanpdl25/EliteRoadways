@@ -33,25 +33,24 @@ export const signuphandeler = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
-    // Check if the email already exists
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "Email already exists" });
     }
 
-    // Hash the password
+  
     const saltRounds = 10;
     const hashedPassword = await bcryptjs.hash(password, saltRounds);
 
-    // Create the user
+  
     const newUser = await User.create({
       username,
       email,
       password: hashedPassword,
-      role, // Role is explicitly passed from the form
+      role, 
     });
-
-    // Create a JWT token
+  
     const payload = {
       userID: newUser._id,
     };
@@ -59,13 +58,13 @@ export const signuphandeler = async (req, res) => {
       expiresIn: "1h",
     });
 
-    // Set the cookie and respond
+    
     res
       .cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 60 * 60 * 1000, // 1 hour
+        maxAge: 60 * 60 * 1000,
       })
       .status(201)
       .json({ success: true, message: "User created successfully" });
@@ -78,19 +77,19 @@ export const signuphandeler = async (req, res) => {
 export const logouthandeler = (req, res) => {
     res
         .cookie("token", null, {
-            expires: new Date(0),        // Expire the cookie
-            httpOnly: true,              // Make sure it's only accessible by HTTP(S), not client-side JavaScript
-            secure: process.env.NODE_ENV === 'production',  // Set to true if you're in production (use HTTPS)
-            sameSite: 'strict',          // Ensure the cookie is sent only in a first-party context
+            expires: new Date(0),       
+            httpOnly: true,              
+            secure: process.env.NODE_ENV === 'production',  
+            sameSite: 'strict',     
         })
         .json({ success: true, message: "User logged out" });
   };
   
   
-// profile.controller.js or wherever you define your route handler
+
 
 export const profile = (req, res) => {
-  // Send the user information that was attached to the request by the `isAuthenticated` middleware
+  
   res.json({
     success: true,
     user: req.user, // The user info is available here
@@ -99,7 +98,7 @@ export const profile = (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0 }); // Exclude password from response
+    const users = await User.find({}, { password: 0 }); 
     res.status(200).json({ success: true, users });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -111,7 +110,7 @@ export const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // First check if the user is an admin
+    //  check if the user is an admin
     const userToDelete = await User.findById(userId);
     
     if (!userToDelete) {
@@ -143,14 +142,14 @@ export const deleteUser = async (req, res) => {
         // Remove seats from bookedSeats array
         bus.bookedSeats = bus.bookedSeats.filter(seat => !userBookings.includes(seat));
         
-        // Remove bookings from bookedBy map
+      
         userBookings.forEach(seat => bus.bookedBy.delete(seat));
         
         await bus.save();
       }
     }
     
-    // Delete the user
+    
     const deletedUser = await User.findByIdAndDelete(userId);
     
     res.status(200).json({ 

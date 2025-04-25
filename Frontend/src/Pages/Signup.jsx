@@ -88,7 +88,7 @@ const Signup = () => {
           className="text-5xl font-extrabold mb-6 text-white drop-shadow-lg tracking-tight"
         >
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
-            Join Chill BUSES
+            Elite Roadways
           </span>
         </motion.h1>
         
@@ -208,17 +208,17 @@ const Signup = () => {
         </motion.form>
       </div>
 
-      {/* Copyright Notice */}
-      <motion.div 
+      {/* Footer */}
+      <motion.footer 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-6 text-center z-10"
+        className="absolute bottom-6 text-center z-10 w-full"
       >
         <p className="text-sm text-white/70 font-light tracking-wide">
-          © 1914 Chill. All Rights Reserved.
+          © 2024 Elite Roadways. All Rights Reserved.
         </p>
-      </motion.div>
+      </motion.footer>
 
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-gray-900/80 z-0"></div>

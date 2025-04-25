@@ -52,7 +52,7 @@ function Addbus() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Format the date and time properly
+    
       const formattedData = {
         ...busData,
         departuretime: new Date(busData.departuretime).toISOString(),
@@ -66,7 +66,7 @@ function Addbus() {
 
       if (response.data.success) {
         toast.success("Bus added successfully!");
-        navigate("/", {
+        navigate("/home", {
           state: {
             toast: {
               type: "success",
@@ -80,7 +80,7 @@ function Addbus() {
     } catch (error) {
       console.error("Error adding bus:", error);
       toast.error(error.response?.data?.message || "Error adding bus");
-      navigate("/");
+      navigate("/home");
     }
   };
 

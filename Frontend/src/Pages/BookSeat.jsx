@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// BookSeat Component to Display Bus Layout with 40 Seats (10 rows x 4 columns)
 function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
   const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -160,10 +159,8 @@ function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
           transition={{ duration: 0.8 }}
           className="text-center mb-8"
         >
-          <h1 className="text-5xl font-extrabold text-white drop-shadow-lg tracking-tight">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-green-400">
-              Select Your Seat
-            </span>
+          <h1 className="text-5xl font-extrabold text-[#90EE90] drop-shadow-lg tracking-tight">
+            Select Your Seat
           </h1>
         </motion.div>
 
@@ -175,15 +172,40 @@ function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
         >
           <div className="bus-layout relative w-full max-w-4xl mx-auto">
             {/* Bus front */}
-            <div className="bus-front h-16 bg-blue-600/40 backdrop-blur-md rounded-t-lg flex items-center justify-center border-b border-white/10">
-              <div className="w-24 h-8 bg-yellow-400/80 rounded-full"></div>
-              <div className="w-24 h-8 bg-yellow-400/80 rounded-full ml-4"></div>
+            <div className="bus-front h-8 bg-blue-600/40 backdrop-blur-md rounded-t-lg flex items-center justify-center border-b border-white/10">
             </div>
             
-            {/* Driver's area */}
-            <div className="driver-area h-20 bg-gray-300/40 backdrop-blur-md flex items-center justify-center border-b border-white/10">
-              <div className="w-16 h-16 bg-gray-400/80 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-bold">D</span>
+            {/* Driver's area with door */}
+            <div className="driver-area h-20 bg-gray-300/40 backdrop-blur-md flex items-center justify-between border-b border-white/10">
+              {/* Door - Left side */}
+              <div className="pl-8">
+                <div className="w-14 h-16 bg-gray-400/80 rounded-lg flex flex-col overflow-hidden border-2 border-gray-500/50">
+                  {/* Door window */}
+                  <div className="w-full h-8 bg-blue-300/30 border-b border-gray-500/50"></div>
+                  {/* Door bottom part */}
+                  <div className="w-full h-8 relative flex items-center">
+                    {/* Door handle */}
+                    <div className="absolute right-2 w-2 h-6 bg-gray-600/80 rounded-full flex items-center justify-center">
+                      <div className="w-1 h-4 bg-gray-700/80 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Driver - Right side with steering wheel */}
+              <div className="pr-8">
+                <div className="w-16 h-16 bg-gray-400/80 rounded-full flex items-center justify-center relative">
+                  {/* Steering wheel */}
+                  <div className="w-12 h-12 border-4 border-gray-600 rounded-full flex items-center justify-center">
+                    {/* Steering wheel spokes */}
+                    <div className="absolute w-8 h-1 bg-gray-600 rounded-full"></div>
+                    <div className="absolute w-8 h-1 bg-gray-600 rounded-full transform rotate-90"></div>
+                    <div className="absolute w-8 h-1 bg-gray-600 rounded-full transform rotate-45"></div>
+                    <div className="absolute w-8 h-1 bg-gray-600 rounded-full transform -rotate-45"></div>
+                    {/* Center of steering wheel */}
+                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -316,16 +338,30 @@ function BookSeat({ selectedSeat, onSelectSeat, busId, bookedSeats, isAdmin }) {
         </motion.div>
       </div>
 
+      {/* Footer */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-6 text-center z-10"
+        className="absolute bottom-6 text-center z-10 w-full"
       >
-        <p className="text-sm text-white/70 font-light tracking-wide">
-          © 1914 Chill. All Rights Reserved.
+        <p className="text-sm text-[#2A004E] font-light tracking-wide">
+          © 2024 Elite Roadways. All Rights Reserved.
         </p>
       </motion.div>
+
+      {/* Back Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => navigate('/home')}
+        className="fixed bottom-8 right-8 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 z-50"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+        </svg>
+        Back to Home
+      </motion.button>
 
       <ToastContainer
         position="top-center"

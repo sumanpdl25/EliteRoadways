@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import User from "./user.model.js";
 
-// Define the schema
+
 const BusSchema = new mongoose.Schema(
   {
     busnum: {
@@ -36,20 +36,20 @@ const BusSchema = new mongoose.Schema(
       immutable: true, // This ensures the value cannot be changed after creation
     },
     boardingPoint: {
-      type: String, // Optional: You can store default boarding point if you want
-      // required: true,
+      type: String, 
+      
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Reference to the User model
+      ref: "User", 
       required: true,
     },
     bookedSeats: {
-      type: [String], // Array to store booked seat numbers
+      type: [String], 
       default: [],
     },
     bookedBy: {
-      type: Map, // Map to associate seat numbers with objects containing userId, pickup location, and contact number
+      type: Map, 
       of: {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         pickupLocation: { type: String },
@@ -69,8 +69,7 @@ const BusSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create a model based on the schema
 const Bus = mongoose.model("Bus", BusSchema);
 
-// Export the model
+
 export default Bus;

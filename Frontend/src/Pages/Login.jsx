@@ -55,7 +55,7 @@ function Login() {
 
     return (
         <div className="min-h-screen bg-gray-900 text-white flex flex-col justify-center items-center dark:bg-gray-800 relative overflow-hidden">
-            {/* Bus Image */}
+        
             <motion.div 
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -92,7 +92,7 @@ function Login() {
                     transition={{ delay: 0.5, duration: 1 }}
                     className="text-xl mb-8 text-white drop-shadow-md font-light tracking-wide"
                 >
-                    Login to your Chill BUSES account
+                    Login to your Elite Roadways account
                 </motion.p>
 
                 <motion.form 
@@ -155,17 +155,17 @@ function Login() {
                 </motion.form>
             </div>
 
-            {/* Copyright Notice */}
-            <motion.div 
+            {/* Footer */}
+            <motion.footer 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.5, duration: 1 }}
-                className="absolute bottom-6 text-center z-10"
+                className="absolute bottom-6 text-center z-10 w-full"
             >
                 <p className="text-sm text-white/70 font-light tracking-wide">
-                    © 1914 Chill. All Rights Reserved.
+                    © 2024 Elite Roadways. All Rights Reserved.
                 </p>
-            </motion.div>
+            </motion.footer>
 
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-gray-900/80 z-0"></div>

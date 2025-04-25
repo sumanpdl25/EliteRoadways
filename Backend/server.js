@@ -5,7 +5,7 @@ import { config } from "dotenv";
 config();
 const port = process.env.PORT || 5000;
 
-// Database connection
+
 dbconn();
 
 app.listen(port, () => {
