@@ -13,6 +13,7 @@ import SeatDetails from './Pages/SeatDetails';
 import AddBus from './Pages/Addbus';
 import BookSeatWrapper from './Pages/BookSeatWrapper';
 import Userdetails from './Pages/Userdetails';
+import MyBookings from './Pages/Mybookings';
 import First from './Pages/First';
 
 const PrivateRoute = ({ children }) => {
@@ -47,7 +48,8 @@ function App() {
           <Route path="book-seat" element={<BookSeatWrapper />} />
           <Route path="seat-details/:seatId" element={<SeatDetails />} />
           <Route path="addbus" element={<AddBus />} />
-          <Route path="userdetails" element={<Userdetails />} />
+          <Route path="mybookings" element={<MyBookings />} />
+          
         </Route>
       </Routes>
     </Router>

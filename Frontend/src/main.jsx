@@ -15,7 +15,7 @@ import SeatDetails from './Pages/SeatDetails.jsx'
 import UserProfile from './Pages/UserProfile.jsx'
 import { Toaster } from 'react-hot-toast'
 import Userdetails from './Pages/Userdetails.jsx'
-
+import MyBookings from './Pages/Mybookings.jsx'
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Toaster position="top-right" />
@@ -32,6 +32,7 @@ createRoot(document.getElementById('root')).render(
       <Route path='/seat-details/:seatId' element={<SeatDetails/>} />
       <Route path='/profile' element={<UserProfile/>} />
     <Route path='/userdetails' element={<Userdetails/>} />
+    <Route path='/mybookings' element={< MyBookings/>} />
     
     </Routes>
   </BrowserRouter>

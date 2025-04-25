@@ -217,6 +217,17 @@ function Home() {
             >
               My Profile
             </motion.button>
+            <motion.button
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.5)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/mybookings')}
+              className="px-6 py-2 bg-white/10 backdrop-blur-md text-white font-medium rounded-lg shadow-lg hover:bg-white/20 transition duration-300 border border-white/20"
+            >
+              My Bookings
+            </motion.button>
           </div>
         </motion.div>
 

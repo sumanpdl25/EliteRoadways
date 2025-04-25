@@ -192,3 +192,34 @@ export const bookSeatHandler = async (req, res) => {
     return res.status(500).json({ success: false, message: "Error booking seat", error: error.message });
   }
 };
+
+export const cancelBookingHandler = async (req, res) => {
+  const { busId, seatNumber } = req.body;
+
+  try {
+    // Find the bus by ID
+    const bus = await Bus.findById(busId);
+    if (!bus) {
+      return res.status(404).json({ success: false, message: "Bus not found" });
+    }
+
+    // Check if the seat is actually booked
+    if (!bus.bookedSeats.includes(seatNumber)) {
+      return res.status(400).json({ success: false, message: "Seat is not booked" });
+    }
+
+    // Remove the booking from bookedBy map
+    bus.bookedBy.delete(seatNumber);
+
+    // Remove the seat from bookedSeats array
+    bus.bookedSeats = bus.bookedSeats.filter(seat => seat !== seatNumber);
+
+    // Save the updated bus
+    await bus.save();
+
+    return res.status(200).json({ success: true, message: "Booking cancelled successfully" });
+  } catch (error) {
+    console.error("Error cancelling booking:", error);
+    return res.status(500).json({ success: false, message: "Error cancelling booking", error: error.message });
+  }
+};
